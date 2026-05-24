@@ -54,4 +54,16 @@ describe('GET /users/{id} handler', () => {
     )) as HandlerResult;
     expect(response.statusCode).toBe(400);
   });
+
+  it('returns 500 for unexpected repository errors', async () => {
+    const stderrSpy = jest.spyOn(process.stderr, 'write').mockImplementation(() => true);
+    mockPool.execute.mockRejectedValueOnce(new Error('database offline'));
+
+    const response = (await handler(
+      makeEvent(dbRow.id) as APIGatewayProxyEventV2,
+    )) as HandlerResult;
+
+    expect(response.statusCode).toBe(500);
+    stderrSpy.mockRestore();
+  });
 });

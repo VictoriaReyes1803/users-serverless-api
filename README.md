@@ -54,7 +54,7 @@ graph TD
         CW[CloudWatch Logs]
     end
 
-    Mailinator([Mailinator\nbesta-test@mailinator.com])
+    Mailinator(["Mailinator<br/>besta-test@mailinator.com"])
 
     Client -->|1 - Solicita token| Cognito
     Cognito -->|JWT| Client

@@ -55,4 +55,29 @@ describe('POST /users handler', () => {
     const response = (await handler(event as APIGatewayProxyEventV2)) as HandlerResult;
     expect(response.statusCode).toBe(400);
   });
+
+  it('returns 400 when body is omitted', async () => {
+    const response = (await handler({} as APIGatewayProxyEventV2)) as HandlerResult;
+    expect(response.statusCode).toBe(400);
+  });
+
+  it('returns 409 when email already exists', async () => {
+    mockPool.execute.mockRejectedValueOnce({ code: 'ER_DUP_ENTRY' });
+
+    const event = makeEvent({ name: 'John Doe', email: 'john@example.com', role: 'user' });
+    const response = (await handler(event as APIGatewayProxyEventV2)) as HandlerResult;
+
+    expect(response.statusCode).toBe(409);
+  });
+
+  it('returns 500 for malformed JSON', async () => {
+    const stderrSpy = jest.spyOn(process.stderr, 'write').mockImplementation(() => true);
+
+    const response = (await handler({
+      body: '{bad-json',
+    } as APIGatewayProxyEventV2)) as HandlerResult;
+
+    expect(response.statusCode).toBe(500);
+    stderrSpy.mockRestore();
+  });
 });

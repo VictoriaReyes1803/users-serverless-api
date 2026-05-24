@@ -50,11 +50,36 @@ describe('UserRepository', () => {
       expect(user.name).toBe('John Doe');
     });
 
+    it('passes phone when creating a user with phone', async () => {
+      mockExecute
+        .mockResolvedValueOnce([{ affectedRows: 1 }])
+        .mockResolvedValueOnce([[{ ...dbRow, phone: '+1234567890' }]]);
+
+      await repo.create({
+        name: 'John Doe',
+        email: 'john@example.com',
+        phone: '+1234567890',
+        role: 'user',
+      });
+
+      expect(mockExecute.mock.calls[0][1]).toEqual(
+        expect.arrayContaining(['John Doe', 'john@example.com', '+1234567890', 'user']),
+      );
+    });
+
     it('throws ConflictError on duplicate email', async () => {
       mockExecute.mockRejectedValueOnce({ code: 'ER_DUP_ENTRY' });
       await expect(
         repo.create({ name: 'John', email: 'john@example.com', role: 'user' }),
       ).rejects.toBeInstanceOf(ConflictError);
+    });
+
+    it('rethrows non-duplicate create errors', async () => {
+      mockExecute.mockRejectedValueOnce(new Error('connection lost'));
+
+      await expect(
+        repo.create({ name: 'John', email: 'john@example.com', role: 'user' }),
+      ).rejects.toThrow('connection lost');
     });
   });
 
@@ -78,10 +103,62 @@ describe('UserRepository', () => {
       expect(user).not.toBeNull();
     });
 
+    it('updates email, phone, and role fields', async () => {
+      mockExecute
+        .mockResolvedValueOnce([{ affectedRows: 1 }])
+        .mockResolvedValueOnce([
+          [{ ...dbRow, email: 'new@example.com', phone: '+1', role: 'admin' }],
+        ]);
+
+      const user = await repo.update(dbRow.id, {
+        email: 'new@example.com',
+        phone: '+1',
+        role: 'admin',
+      });
+
+      expect(mockExecute.mock.calls[0][0]).toContain('email = ?');
+      expect(mockExecute.mock.calls[0][0]).toContain('phone = ?');
+      expect(mockExecute.mock.calls[0][0]).toContain('role = ?');
+      expect(user).not.toBeNull();
+    });
+
+    it('updates phone to null', async () => {
+      mockExecute.mockResolvedValueOnce([{ affectedRows: 1 }]).mockResolvedValueOnce([[dbRow]]);
+
+      await repo.update(dbRow.id, { phone: null });
+
+      expect(mockExecute.mock.calls[0][1]).toEqual([null, dbRow.id]);
+    });
+
+    it('returns existing user when no update fields are provided', async () => {
+      mockExecute.mockResolvedValueOnce([[dbRow]]);
+
+      const user = await repo.update(dbRow.id, {});
+
+      expect(user).not.toBeNull();
+      expect(mockExecute).toHaveBeenCalledTimes(1);
+    });
+
     it('returns null when user not found', async () => {
       mockExecute.mockResolvedValueOnce([{ affectedRows: 0 }]);
       const user = await repo.update('non-existent', { name: 'Updated' });
       expect(user).toBeNull();
+    });
+
+    it('throws ConflictError on duplicate email update', async () => {
+      mockExecute.mockRejectedValueOnce({ code: 'ER_DUP_ENTRY' });
+
+      await expect(repo.update(dbRow.id, { email: 'john@example.com' })).rejects.toBeInstanceOf(
+        ConflictError,
+      );
+    });
+
+    it('rethrows non-duplicate update errors', async () => {
+      mockExecute.mockRejectedValueOnce(new Error('connection lost'));
+
+      await expect(repo.update(dbRow.id, { email: 'john@example.com' })).rejects.toThrow(
+        'connection lost',
+      );
     });
   });
 

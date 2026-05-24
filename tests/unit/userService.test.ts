@@ -47,6 +47,27 @@ describe('UserService', () => {
       await new Promise((r) => setImmediate(r));
       expect(emailService.sendUserCreatedEmail).toHaveBeenCalledWith(mockUser);
     });
+
+    it('logs email errors without failing user creation', async () => {
+      const stderrSpy = jest.spyOn(process.stderr, 'write').mockImplementation(() => true);
+      mockRepo.create.mockResolvedValueOnce(mockUser);
+      (emailService.sendUserCreatedEmail as jest.Mock).mockRejectedValueOnce(
+        new Error('SES unavailable'),
+      );
+
+      const user = await service.createUser({
+        name: 'John Doe',
+        email: 'john@example.com',
+        role: 'user',
+      });
+
+      await new Promise((r) => setImmediate(r));
+      expect(user).toEqual(mockUser);
+      expect(stderrSpy).toHaveBeenCalledWith(
+        expect.stringContaining('[EmailService] Failed to send notification'),
+      );
+      stderrSpy.mockRestore();
+    });
   });
 
   describe('getUserById', () => {

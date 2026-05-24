@@ -41,6 +41,14 @@ describe('sendUserCreatedEmail', () => {
     );
   });
 
+  it('uses N/A for missing phone in both email bodies', async () => {
+    await sendUserCreatedEmail({ ...mockUser, phone: null });
+
+    const commandInput = (SendEmailCommand as unknown as jest.Mock).mock.calls[0][0];
+    expect(commandInput.Message.Body.Html.Data).toContain('N/A');
+    expect(commandInput.Message.Body.Text.Data).toContain('N/A');
+  });
+
   it('propagates SES errors to the caller', async () => {
     mockSend.mockRejectedValueOnce(new Error('SES unavailable'));
     await expect(sendUserCreatedEmail(mockUser)).rejects.toThrow('SES unavailable');

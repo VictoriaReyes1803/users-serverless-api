@@ -60,4 +60,24 @@ describe('PUT /users/{id} handler', () => {
     )) as HandlerResult;
     expect(response.statusCode).toBe(400);
   });
+
+  it('returns 400 when body is omitted', async () => {
+    const response = (await handler({
+      pathParameters: { id: dbRow.id },
+    } as unknown as APIGatewayProxyEventV2)) as HandlerResult;
+
+    expect(response.statusCode).toBe(400);
+  });
+
+  it('returns 500 for malformed JSON', async () => {
+    const stderrSpy = jest.spyOn(process.stderr, 'write').mockImplementation(() => true);
+
+    const response = (await handler({
+      pathParameters: { id: dbRow.id },
+      body: '{bad-json',
+    } as unknown as APIGatewayProxyEventV2)) as HandlerResult;
+
+    expect(response.statusCode).toBe(500);
+    stderrSpy.mockRestore();
+  });
 });
