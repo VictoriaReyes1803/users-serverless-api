@@ -34,9 +34,7 @@ describe('POST /users handler', () => {
   });
 
   it('returns 201 with the created user', async () => {
-    mockPool.execute
-      .mockResolvedValueOnce([{ affectedRows: 1 }])
-      .mockResolvedValueOnce([[dbRow]]);
+    mockPool.execute.mockResolvedValueOnce([{ affectedRows: 1 }]).mockResolvedValueOnce([[dbRow]]);
 
     const event = makeEvent({ name: 'John Doe', email: 'john@example.com', role: 'user' });
     const response = (await handler(event as APIGatewayProxyEventV2)) as HandlerResult;

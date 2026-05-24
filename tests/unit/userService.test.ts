@@ -22,7 +22,7 @@ const mockRepo: jest.Mocked<UserRepository> = {
   findAll: jest.fn(),
   update: jest.fn(),
   delete: jest.fn(),
-} as any;
+} as unknown as jest.Mocked<UserRepository>;
 
 describe('UserService', () => {
   let service: UserService;
@@ -36,7 +36,11 @@ describe('UserService', () => {
   describe('createUser', () => {
     it('creates a user and fires email notification', async () => {
       mockRepo.create.mockResolvedValueOnce(mockUser);
-      const user = await service.createUser({ name: 'John Doe', email: 'john@example.com', role: 'user' });
+      const user = await service.createUser({
+        name: 'John Doe',
+        email: 'john@example.com',
+        role: 'user',
+      });
       expect(user).toEqual(mockUser);
       expect(mockRepo.create).toHaveBeenCalledTimes(1);
       // Email is fire-and-forget; give it a tick to be called
@@ -77,7 +81,9 @@ describe('UserService', () => {
 
     it('throws NotFoundError when user does not exist', async () => {
       mockRepo.update.mockResolvedValueOnce(null);
-      await expect(service.updateUser('non-existent', { name: 'x' })).rejects.toBeInstanceOf(NotFoundError);
+      await expect(service.updateUser('non-existent', { name: 'x' })).rejects.toBeInstanceOf(
+        NotFoundError,
+      );
     });
   });
 

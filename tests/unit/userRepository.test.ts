@@ -1,8 +1,9 @@
 import { UserRepository } from '../../src/repositories/userRepository';
 import { ConflictError } from '../../src/utils/errors';
+import { Pool } from 'mysql2/promise';
 
 const mockExecute = jest.fn();
-const mockPool = { execute: mockExecute } as any;
+const mockPool = { execute: mockExecute } as unknown as Pool;
 
 const now = new Date('2024-01-01T00:00:00.000Z');
 
@@ -51,15 +52,15 @@ describe('UserRepository', () => {
 
     it('throws ConflictError on duplicate email', async () => {
       mockExecute.mockRejectedValueOnce({ code: 'ER_DUP_ENTRY' });
-      await expect(repo.create({ name: 'John', email: 'john@example.com', role: 'user' })).rejects.toBeInstanceOf(ConflictError);
+      await expect(
+        repo.create({ name: 'John', email: 'john@example.com', role: 'user' }),
+      ).rejects.toBeInstanceOf(ConflictError);
     });
   });
 
   describe('findAll', () => {
     it('returns paginated users', async () => {
-      mockExecute
-        .mockResolvedValueOnce([[{ total: 1 }]])
-        .mockResolvedValueOnce([[dbRow]]);
+      mockExecute.mockResolvedValueOnce([[{ total: 1 }]]).mockResolvedValueOnce([[dbRow]]);
       const result = await repo.findAll(10, 0);
       expect(result.total).toBe(1);
       expect(result.items).toHaveLength(1);

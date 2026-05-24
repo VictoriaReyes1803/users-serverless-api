@@ -27,7 +27,11 @@ export function noContent(): APIGatewayProxyResultV2 {
   };
 }
 
-export function errorResponse(statusCode: number, message: string, details?: unknown): APIGatewayProxyResultV2 {
+export function errorResponse(
+  statusCode: number,
+  message: string,
+  details?: unknown,
+): APIGatewayProxyResultV2 {
   return {
     statusCode,
     headers,

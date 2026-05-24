@@ -30,10 +30,10 @@ describe('PUT /users/{id} handler', () => {
   });
 
   it('returns 200 with the updated user', async () => {
-    mockPool.execute
-      .mockResolvedValueOnce([{ affectedRows: 1 }])
-      .mockResolvedValueOnce([[dbRow]]);
-    const response = (await handler(makeEvent(dbRow.id, { name: 'Updated Name' }) as APIGatewayProxyEventV2)) as HandlerResult;
+    mockPool.execute.mockResolvedValueOnce([{ affectedRows: 1 }]).mockResolvedValueOnce([[dbRow]]);
+    const response = (await handler(
+      makeEvent(dbRow.id, { name: 'Updated Name' }) as APIGatewayProxyEventV2,
+    )) as HandlerResult;
     expect(response.statusCode).toBe(200);
     const body = JSON.parse(response.body);
     expect(body.name).toBe('Updated Name');
@@ -41,17 +41,23 @@ describe('PUT /users/{id} handler', () => {
 
   it('returns 404 when user not found', async () => {
     mockPool.execute.mockResolvedValueOnce([{ affectedRows: 0 }]);
-    const response = (await handler(makeEvent(dbRow.id, { name: 'Updated' }) as APIGatewayProxyEventV2)) as HandlerResult;
+    const response = (await handler(
+      makeEvent(dbRow.id, { name: 'Updated' }) as APIGatewayProxyEventV2,
+    )) as HandlerResult;
     expect(response.statusCode).toBe(404);
   });
 
   it('returns 400 for empty update body', async () => {
-    const response = (await handler(makeEvent(dbRow.id, {}) as APIGatewayProxyEventV2)) as HandlerResult;
+    const response = (await handler(
+      makeEvent(dbRow.id, {}) as APIGatewayProxyEventV2,
+    )) as HandlerResult;
     expect(response.statusCode).toBe(400);
   });
 
   it('returns 400 for invalid uuid', async () => {
-    const response = (await handler(makeEvent('bad-id', { name: 'x' }) as APIGatewayProxyEventV2)) as HandlerResult;
+    const response = (await handler(
+      makeEvent('bad-id', { name: 'x' }) as APIGatewayProxyEventV2,
+    )) as HandlerResult;
     expect(response.statusCode).toBe(400);
   });
 });

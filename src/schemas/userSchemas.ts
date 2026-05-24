@@ -5,35 +5,28 @@ const userRoleSchema = z.enum(['admin', 'user', 'manager']);
 export const createUserSchema = z.object({
   name: z.string().min(1, 'Name is required').max(150, 'Name must be at most 150 characters'),
   email: z.string().email('Invalid email address').max(255, 'Email must be at most 255 characters'),
-  phone: z
-    .string()
-    .max(50, 'Phone must be at most 50 characters')
-    .optional()
-    .nullable(),
+  phone: z.string().max(50, 'Phone must be at most 50 characters').optional().nullable(),
   role: userRoleSchema,
 });
 
-export const updateUserSchema = z.object({
-  name: z
-    .string()
-    .min(1, 'Name is required')
-    .max(150, 'Name must be at most 150 characters')
-    .optional(),
-  email: z
-    .string()
-    .email('Invalid email address')
-    .max(255, 'Email must be at most 255 characters')
-    .optional(),
-  phone: z
-    .string()
-    .max(50, 'Phone must be at most 50 characters')
-    .optional()
-    .nullable(),
-  role: userRoleSchema.optional(),
-}).refine(
-  (data) => Object.keys(data).length > 0,
-  { message: 'At least one field must be provided for update' },
-);
+export const updateUserSchema = z
+  .object({
+    name: z
+      .string()
+      .min(1, 'Name is required')
+      .max(150, 'Name must be at most 150 characters')
+      .optional(),
+    email: z
+      .string()
+      .email('Invalid email address')
+      .max(255, 'Email must be at most 255 characters')
+      .optional(),
+    phone: z.string().max(50, 'Phone must be at most 50 characters').optional().nullable(),
+    role: userRoleSchema.optional(),
+  })
+  .refine((data) => Object.keys(data).length > 0, {
+    message: 'At least one field must be provided for update',
+  });
 
 export const listUsersQuerySchema = z.object({
   limit: z

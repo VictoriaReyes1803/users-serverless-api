@@ -32,7 +32,9 @@ describe('GET /users/{id} handler', () => {
 
   it('returns 200 with the user when found', async () => {
     mockPool.execute.mockResolvedValueOnce([[dbRow]]);
-    const response = (await handler(makeEvent(dbRow.id) as APIGatewayProxyEventV2)) as HandlerResult;
+    const response = (await handler(
+      makeEvent(dbRow.id) as APIGatewayProxyEventV2,
+    )) as HandlerResult;
     expect(response.statusCode).toBe(200);
     const body = JSON.parse(response.body);
     expect(body.id).toBe(dbRow.id);
@@ -40,12 +42,16 @@ describe('GET /users/{id} handler', () => {
 
   it('returns 404 when user not found', async () => {
     mockPool.execute.mockResolvedValueOnce([[]]);
-    const response = (await handler(makeEvent(dbRow.id) as APIGatewayProxyEventV2)) as HandlerResult;
+    const response = (await handler(
+      makeEvent(dbRow.id) as APIGatewayProxyEventV2,
+    )) as HandlerResult;
     expect(response.statusCode).toBe(404);
   });
 
   it('returns 400 for invalid uuid', async () => {
-    const response = (await handler(makeEvent('not-a-uuid') as APIGatewayProxyEventV2)) as HandlerResult;
+    const response = (await handler(
+      makeEvent('not-a-uuid') as APIGatewayProxyEventV2,
+    )) as HandlerResult;
     expect(response.statusCode).toBe(400);
   });
 });

@@ -13,6 +13,7 @@ module.exports = {
           module: 'commonjs',
           esModuleInterop: true,
           strict: true,
+          types: ['node', 'jest'],
         },
       },
     ],

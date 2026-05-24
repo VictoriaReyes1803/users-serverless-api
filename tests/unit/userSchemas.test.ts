@@ -1,4 +1,9 @@
-import { createUserSchema, updateUserSchema, listUsersQuerySchema, uuidParamSchema } from '../../src/schemas/userSchemas';
+import {
+  createUserSchema,
+  updateUserSchema,
+  listUsersQuerySchema,
+  uuidParamSchema,
+} from '../../src/schemas/userSchemas';
 
 describe('createUserSchema', () => {
   it('accepts valid input', () => {
@@ -21,17 +26,29 @@ describe('createUserSchema', () => {
   });
 
   it('rejects invalid email', () => {
-    const result = createUserSchema.safeParse({ name: 'John', email: 'not-an-email', role: 'user' });
+    const result = createUserSchema.safeParse({
+      name: 'John',
+      email: 'not-an-email',
+      role: 'user',
+    });
     expect(result.success).toBe(false);
   });
 
   it('rejects invalid role', () => {
-    const result = createUserSchema.safeParse({ name: 'John', email: 'john@example.com', role: 'superadmin' });
+    const result = createUserSchema.safeParse({
+      name: 'John',
+      email: 'john@example.com',
+      role: 'superadmin',
+    });
     expect(result.success).toBe(false);
   });
 
   it('rejects empty name', () => {
-    const result = createUserSchema.safeParse({ name: '', email: 'john@example.com', role: 'user' });
+    const result = createUserSchema.safeParse({
+      name: '',
+      email: 'john@example.com',
+      role: 'user',
+    });
     expect(result.success).toBe(false);
   });
 });

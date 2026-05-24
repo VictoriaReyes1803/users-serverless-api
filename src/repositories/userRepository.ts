@@ -75,10 +75,22 @@ export class UserRepository {
     const fields: string[] = [];
     const values: SqlValue[] = [];
 
-    if (input.name !== undefined) { fields.push('name = ?'); values.push(input.name); }
-    if (input.email !== undefined) { fields.push('email = ?'); values.push(input.email); }
-    if (input.phone !== undefined) { fields.push('phone = ?'); values.push(input.phone ?? null); }
-    if (input.role !== undefined) { fields.push('role = ?'); values.push(input.role); }
+    if (input.name !== undefined) {
+      fields.push('name = ?');
+      values.push(input.name);
+    }
+    if (input.email !== undefined) {
+      fields.push('email = ?');
+      values.push(input.email);
+    }
+    if (input.phone !== undefined) {
+      fields.push('phone = ?');
+      values.push(input.phone ?? null);
+    }
+    if (input.role !== undefined) {
+      fields.push('role = ?');
+      values.push(input.role);
+    }
 
     if (fields.length === 0) return this.findById(id);
 
@@ -103,10 +115,9 @@ export class UserRepository {
   }
 
   async delete(id: string): Promise<boolean> {
-    const [result] = await this.pool.execute<ResultSetHeader>(
-      'DELETE FROM users WHERE id = ?',
-      [id],
-    );
+    const [result] = await this.pool.execute<ResultSetHeader>('DELETE FROM users WHERE id = ?', [
+      id,
+    ]);
     return result.affectedRows > 0;
   }
 }
