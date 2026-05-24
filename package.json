@@ -1,0 +1,43 @@
+{
+  "name": "besta-users-serverless-api",
+  "version": "1.0.0",
+  "description": "Production-ready AWS Serverless REST API for user management",
+  "main": "dist/handlers/createUser.js",
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "scripts": {
+    "build": "tsc --noEmit false --outDir dist && npm run copy-assets",
+    "copy-assets": "node -e \"require('fs').cpSync('src', 'dist/src', {recursive: true, filter: (s) => !s.endsWith('.ts')})\"",
+    "test": "jest --coverage --forceExit",
+    "test:watch": "jest --watch",
+    "lint": "eslint 'src/**/*.ts' 'tests/**/*.ts'",
+    "lint:fix": "eslint 'src/**/*.ts' 'tests/**/*.ts' --fix",
+    "format": "prettier --write 'src/**/*.ts' 'tests/**/*.ts'",
+    "format:check": "prettier --check 'src/**/*.ts' 'tests/**/*.ts'",
+    "package": "npm run build && cd dist && zip -r ../function.zip . && cd ..",
+    "deploy": "cd infra && terraform apply -auto-approve",
+    "destroy": "cd infra && terraform destroy -auto-approve"
+  },
+  "dependencies": {
+    "@aws-sdk/client-ses": "^3.600.0",
+    "mysql2": "^3.10.0",
+    "uuid": "^10.0.0",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/aws-lambda": "^8.10.143",
+    "@types/jest": "^29.5.12",
+    "@types/node": "^20.14.0",
+    "@types/uuid": "^10.0.0",
+    "@typescript-eslint/eslint-plugin": "^7.13.0",
+    "@typescript-eslint/parser": "^7.13.0",
+    "eslint": "^8.57.0",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-prettier": "^5.1.3",
+    "jest": "^29.7.0",
+    "prettier": "^3.3.2",
+    "ts-jest": "^29.1.5",
+    "typescript": "^5.5.2"
+  }
+}
