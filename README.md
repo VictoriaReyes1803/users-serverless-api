@@ -99,7 +99,7 @@ graph TD
 
 ## Estructura de carpetas
 
-```
+```raw
 besta-users-serverless-api/
 ├── src/
 │   ├── handlers/          # Un handler por endpoint Lambda
@@ -194,7 +194,7 @@ Las variables de entorno en Lambda se inyectan automáticamente por Terraform; e
 ```bash
 # Clonar el repositorio
 git clone <repo-url>
-cd besta-users-serverless-api
+cd users-serverless-api
 
 # Instalar dependencias
 npm install
@@ -257,7 +257,7 @@ terraform apply
 
 ### 4. Anotar los outputs
 
-```
+```raw
 api_url              = https://xxxxxxxxxx.execute-api.us-east-1.amazonaws.com/users
 cognito_user_pool_id = us-east-1_XXXXXXXXX
 cognito_client_id    = xxxxxxxxxxxxxxxxxxxxxxxxxx

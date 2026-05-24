@@ -71,3 +71,39 @@ resource "aws_cloudwatch_log_group" "lambda" {
   name              = "/aws/lambda/${var.project_name}-${each.key}"
   retention_in_days = 14
 }
+
+# ─── Migration Lambda ────────────────────────────────────────────────────────
+# One-shot function to apply DB migrations from within the VPC.
+# Invoke once after deploy: aws lambda invoke --function-name besta-users-migrate out.json
+resource "aws_lambda_function" "migrate" {
+  function_name    = "${var.project_name}-migrate"
+  description      = "Runs DB migrations from inside the VPC (invoke once)"
+  role             = aws_iam_role.lambda.arn
+  filename         = var.lambda_zip_path
+  handler          = "handlers/migrate.handler"
+  runtime          = "nodejs20.x"
+  memory_size      = 256
+  timeout          = 60
+
+  source_code_hash = try(filebase64sha256(var.lambda_zip_path), null)
+
+  environment {
+    variables = local.lambda_env
+  }
+
+  vpc_config {
+    subnet_ids         = local.lambda_vpc_config.subnet_ids
+    security_group_ids = local.lambda_vpc_config.security_group_ids
+  }
+
+  depends_on = [
+    aws_iam_role_policy_attachment.lambda_vpc_access,
+    aws_iam_role_policy_attachment.lambda_logs,
+    aws_db_instance.main,
+  ]
+}
+
+resource "aws_cloudwatch_log_group" "migrate" {
+  name              = "/aws/lambda/${var.project_name}-migrate"
+  retention_in_days = 7
+}

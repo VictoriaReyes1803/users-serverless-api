@@ -1,5 +1,5 @@
 import { Pool, RowDataPacket, ResultSetHeader } from 'mysql2/promise';
-import { v4 as uuidv4 } from 'uuid';
+import { randomUUID } from 'crypto';
 import { User, CreateUserInput, UpdateUserInput, DbUserRow, PaginatedUsers } from '../types/user';
 
 type SqlValue = string | number | boolean | null | Date;
@@ -21,7 +21,7 @@ export class UserRepository {
   constructor(private readonly pool: Pool) {}
 
   async create(input: CreateUserInput): Promise<User> {
-    const id = uuidv4();
+    const id = randomUUID();
     const now = new Date();
 
     try {
@@ -52,11 +52,13 @@ export class UserRepository {
   }
 
   async findAll(limit: number, offset: number): Promise<PaginatedUsers> {
+    const safeLimit = Math.trunc(limit);
+    const safeOffset = Math.trunc(offset);
+
     const [countResult, dataResult] = await Promise.all([
       this.pool.execute<RowDataPacket[]>('SELECT COUNT(*) as total FROM users'),
       this.pool.execute<RowDataPacket[]>(
-        'SELECT id, name, email, phone, role, created_at, updated_at FROM users ORDER BY created_at DESC LIMIT ? OFFSET ?',
-        [limit, offset],
+        `SELECT id, name, email, phone, role, created_at, updated_at FROM users ORDER BY created_at DESC LIMIT ${safeLimit} OFFSET ${safeOffset}`,
       ),
     ]);
 
@@ -65,8 +67,8 @@ export class UserRepository {
 
     return {
       items: (rows as DbUserRow[]).map(mapRowToUser),
-      limit,
-      offset,
+      limit: safeLimit,
+      offset: safeOffset,
       total,
     };
   }
