@@ -1,12 +1,12 @@
 import { SESClient, SendEmailCommand } from '@aws-sdk/client-ses';
 import { User } from '../types/user';
 
-const ses = new SESClient({ region: process.env.AWS_REGION ?? 'us-east-1' });
-
 const SENDER_EMAIL = process.env.SES_SENDER_EMAIL ?? '';
 const NOTIFICATION_EMAIL = process.env.SES_NOTIFICATION_EMAIL ?? 'besta-test@mailinator.com';
 
 export async function sendUserCreatedEmail(user: User): Promise<void> {
+  const ses = new SESClient({ region: process.env.AWS_REGION ?? 'us-east-1' });
+
   const command = new SendEmailCommand({
     Source: SENDER_EMAIL,
     Destination: {

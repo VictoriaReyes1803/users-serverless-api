@@ -52,7 +52,7 @@ export class UserRepository {
   }
 
   async findAll(limit: number, offset: number): Promise<PaginatedUsers> {
-    const [[{ total }], [rows]] = await Promise.all([
+    const [countResult, dataResult] = await Promise.all([
       this.pool.execute<RowDataPacket[]>('SELECT COUNT(*) as total FROM users'),
       this.pool.execute<RowDataPacket[]>(
         'SELECT id, name, email, phone, role, created_at, updated_at FROM users ORDER BY created_at DESC LIMIT ? OFFSET ?',
@@ -60,11 +60,14 @@ export class UserRepository {
       ),
     ]);
 
+    const total = (countResult[0][0] as { total: number }).total;
+    const rows = dataResult[0];
+
     return {
       items: (rows as DbUserRow[]).map(mapRowToUser),
       limit,
       offset,
-      total: (total as { total: number }).total,
+      total,
     };
   }
 

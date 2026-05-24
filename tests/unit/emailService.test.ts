@@ -3,9 +3,7 @@ import { sendUserCreatedEmail } from '../../src/services/emailService';
 import { User } from '../../src/types/user';
 
 jest.mock('@aws-sdk/client-ses', () => ({
-  SESClient: jest.fn().mockImplementation(() => ({
-    send: jest.fn().mockResolvedValue({}),
-  })),
+  SESClient: jest.fn(),
   SendEmailCommand: jest.fn().mockImplementation((input) => ({ input })),
 }));
 
@@ -20,12 +18,19 @@ const mockUser: User = {
 };
 
 describe('sendUserCreatedEmail', () => {
-  it('sends an email with the correct parameters', async () => {
+  const mockSend = jest.fn();
+
+  beforeEach(() => {
+    // Re-apply after resetMocks clears implementations
+    (SESClient as jest.Mock).mockImplementation(() => ({ send: mockSend }));
+    jest.mocked(SendEmailCommand).mockImplementation((input) => ({ input }) as never);
+    mockSend.mockResolvedValue({});
+  });
+
+  it('sends an email with the correct destination and subject', async () => {
     await sendUserCreatedEmail(mockUser);
 
-    // Inspect the SES instance that was created when the module loaded
-    const sesInstance = (SESClient as jest.Mock).mock.instances[0] as { send: jest.Mock };
-    expect(sesInstance.send).toHaveBeenCalledTimes(1);
+    expect(mockSend).toHaveBeenCalledTimes(1);
     expect(SendEmailCommand).toHaveBeenCalledWith(
       expect.objectContaining({
         Destination: { ToAddresses: [expect.any(String)] },
@@ -37,9 +42,7 @@ describe('sendUserCreatedEmail', () => {
   });
 
   it('propagates SES errors to the caller', async () => {
-    const sesInstance = (SESClient as jest.Mock).mock.instances[0] as { send: jest.Mock };
-    sesInstance.send.mockRejectedValueOnce(new Error('SES unavailable'));
-
+    mockSend.mockRejectedValueOnce(new Error('SES unavailable'));
     await expect(sendUserCreatedEmail(mockUser)).rejects.toThrow('SES unavailable');
   });
 });
