@@ -37,7 +37,8 @@ resource "aws_lambda_function" "functions" {
   memory_size   = var.lambda_memory_mb
   timeout       = var.lambda_timeout_seconds
 
-  source_code_hash = filebase64sha256(var.lambda_zip_path)
+  # try() allows `terraform plan` to run without the zip; the hash is required for apply
+  source_code_hash = try(filebase64sha256(var.lambda_zip_path), null)
 
   environment {
     variables = local.lambda_env

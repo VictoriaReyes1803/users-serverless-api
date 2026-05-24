@@ -22,7 +22,7 @@ resource "aws_db_instance" "main" {
   vpc_security_group_ids = [aws_security_group.rds.id]
 
   publicly_accessible     = false
-  backup_retention_period = 7
+  backup_retention_period = 0     # 0 = backups desactivados (requerido en Free Tier); aumentar en prod
   deletion_protection     = false # Set to true for production
   skip_final_snapshot     = true  # Set to false for production
 
