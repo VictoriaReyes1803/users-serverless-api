@@ -4,6 +4,61 @@
 
 AWS Serverless REST API for user management. Node.js 20 + TypeScript, Lambda functions, API Gateway HTTP API, Aurora Serverless v2 (MySQL 8.0), Cognito JWT auth, SES email notifications. Infrastructure managed with Terraform.
 
+## Tech stack
+
+### Runtime & language
+| | Version |
+|---|---|
+| Node.js | 20+ |
+| TypeScript | ^5.5 |
+
+### Production dependencies
+| Package | Version | Purpose |
+|---|---|---|
+| `mysql2` | ^3.10 | MySQL 8 client + connection pool against Aurora Serverless v2 |
+| `zod` | ^3.23 | Schema validation and type inference |
+| `@aws-sdk/client-ses` | ^3.600 | Send email notifications via SES |
+| `@aws-sdk/client-secrets-manager` | ^3.1053 | Read Aurora credentials from Secrets Manager at cold start |
+
+### Dev & tooling
+| Package | Version | Purpose |
+|---|---|---|
+| `jest` | ^29.7 | Test runner |
+| `ts-jest` | ^29.1 | TypeScript transformer for Jest (no separate compile step) |
+| `@types/jest` | ^29.5 | Jest type definitions |
+| `typescript` | ^5.5 | Compiler (`tsc`) |
+| `eslint` | ^8.57 | Linter |
+| `@typescript-eslint/parser` | ^7.13 | TypeScript-aware ESLint parser |
+| `@typescript-eslint/eslint-plugin` | ^7.13 | TypeScript lint rules |
+| `eslint-config-prettier` | ^9.1 | Disables ESLint rules that conflict with Prettier |
+| `eslint-plugin-prettier` | ^5.1 | Runs Prettier as an ESLint rule |
+| `prettier` | ^3.3 | Code formatter |
+| `swagger-ui-watcher` | ^2.1 | Serves `docs/openapi.yaml` locally on port 8000 |
+| `@types/aws-lambda` | ^8.10 | Lambda handler type definitions |
+| `@types/node` | ^20 | Node.js built-in type definitions |
+
+### Coverage
+Jest runs with the `--coverage` flag (`npm test`). Coverage is collected via the built-in **V8** provider (configurable in `jest.config.js`). Target: **100%** on statements, branches, functions, and lines. CI fails if any threshold drops below 100%.
+
+### AWS services
+| Service | Role |
+|---|---|
+| **Lambda** (×5 + migrate) | One function per CRUD endpoint |
+| **API Gateway HTTP API** | HTTP routing + JWT authorizer |
+| **Amazon Cognito** | User Pool; issues IdToken / AccessToken / RefreshToken (RS256) |
+| **Aurora Serverless v2** (MySQL 8.0) | Relational DB with auto-scaling; inside private VPC subnets |
+| **AWS Secrets Manager** | Stores Aurora managed password; rotated every 7 days |
+| **Amazon SES** | Fire-and-forget email on user creation |
+| **VPC + NAT Gateway** | Isolates Lambda and Aurora; NAT allows outbound-only internet |
+| **IAM** | Least-privilege roles for each Lambda |
+| **CloudWatch Logs** | Lambda and API Gateway observability |
+
+### Infrastructure & CI/CD
+| Tool | Version | Purpose |
+|---|---|---|
+| Terraform | >= 1.5 | Infrastructure as code (`infra/`) |
+| GitHub Actions | — | CI (lint, format-check, test, build) + CD (package + `terraform apply`) on push to `main` |
+
 ## Architecture
 
 - **Handlers** (`src/handlers/`) — one Lambda per route; parse/validate input, delegate to service. Includes `migrate.ts`, a one-shot Lambda that applies the `users` table migration from inside the VPC (no bastion required)
