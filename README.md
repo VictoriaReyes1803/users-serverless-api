@@ -473,8 +473,7 @@ El archivo `docs/openapi.yaml` contiene la especificación completa de la API.
 - Los Lambda están dentro de la VPC y solo tienen acceso a internet saliente vía NAT Gateway.
 - Las políticas IAM de Lambda siguen el principio de mínimo privilegio: solo `ses:SendEmail`, `ses:SendRawEmail` y permisos de VPC/CloudWatch.
 - `deletion_protection = false` en RDS es apropiado para dev/testing. Cambiar a `true` en producción.
-- Los secrets (`db_password`) se definen en `terraform.tfvars` que está en `.gitignore` y nunca debe commitearse.
-- Para mayor seguridad en producción, considera usar AWS Secrets Manager para las credenciales de la base de datos y rotarlas automáticamente.
+- Las credenciales de RDS se almacenan en AWS Secrets Manager y se rotan automáticamente cada 7 días mediante `manage_master_user_password = true` en Terraform. Lambda lee el secret en cada cold start vía `GetSecretValue`.
 
 ---
 
@@ -482,7 +481,6 @@ El archivo `docs/openapi.yaml` contiene la especificación completa de la API.
 
 | Mejora | Descripción |
 |---|---|
-| **AWS Secrets Manager** | Almacenar y rotar automáticamente las credenciales RDS |
 | **RDS Proxy** | Reducir la carga de conexiones a la DB con múltiples invocaciones Lambda |
 | **Multi-AZ RDS** | Alta disponibilidad para producción |
 | **WAF** | Web Application Firewall en API Gateway para protección adicional |
