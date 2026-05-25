@@ -15,7 +15,7 @@ export const handler = async (event: APIGatewayProxyEventV2): Promise<APIGateway
 
     const { limit, offset } = parsed.data;
 
-    const pool = getPool();
+    const pool = await getPool();
     const repository = new UserRepository(pool);
     const service = new UserService(repository);
 

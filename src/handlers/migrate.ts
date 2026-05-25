@@ -19,7 +19,7 @@ CREATE TABLE IF NOT EXISTS users (
 `;
 
 export const handler = async (): Promise<APIGatewayProxyResultV2> => {
-  const pool = getPool();
+  const pool = await getPool();
 
   try {
     await pool.execute(MIGRATION_SQL);

@@ -15,12 +15,13 @@ API REST serverless de producción para gestión de usuarios construida sobre in
 7. [Instalación](#instalación)
 8. [Ejecutar pruebas](#ejecutar-pruebas)
 9. [Despliegue con Terraform](#despliegue-con-terraform)
-10. [Autenticación con Cognito](#autenticación-con-cognito)
-11. [Endpoints con curl](#endpoints-con-curl)
-12. [Verificación de email en Mailinator](#verificación-de-email-en-mailinator)
-13. [Documentación OpenAPI](#documentación-openapi)
-14. [Notas de seguridad](#notas-de-seguridad)
-15. [Mejoras posibles](#mejoras-posibles)
+10. [Despliegue automatico con GitHub Actions](#despliegue-automatico-con-github-actions)
+11. [Autenticación con Cognito](#autenticación-con-cognito)
+12. [Endpoints con curl](#endpoints-con-curl)
+13. [Verificación de email en Mailinator](#verificación-de-email-en-mailinator)
+14. [Documentación OpenAPI](#documentación-openapi)
+15. [Notas de seguridad](#notas-de-seguridad)
+16. [Mejoras posibles](#mejoras-posibles)
 
 ---
 
@@ -278,6 +279,40 @@ mysql -h <rds_endpoint> -u admin -p besta_users < migrations/001_create_users_ta
 cd infra
 terraform destroy
 ```
+
+---
+
+## Despliegue automatico con GitHub Actions
+
+El workflow `.github/workflows/ci.yml` ejecuta lint, format check, tests con coverage y build en `push`/`pull_request` hacia `main` y `develop`.
+
+Cuando hay un `push` a `main`, el job `Package & Deploy` tambien:
+
+1. Instala dependencias con `npm ci`.
+2. Genera `function.zip` con `npm run package`.
+3. Configura credenciales AWS.
+4. Ejecuta `terraform init`.
+5. Ejecuta `terraform apply -auto-approve -input=false`.
+6. Sube `function.zip` como artifact del workflow.
+
+El archivo `.env` es local y esta ignorado por Git. Para GitHub Actions debes copiar sus valores sensibles a **GitHub Secrets**:
+
+| Secret | Valor sugerido |
+|---|---|
+| `AWS_ACCESS_KEY_ID` | Access key de un usuario/rol IAM con permisos para Terraform |
+| `AWS_SECRET_ACCESS_KEY` | Secret key correspondiente |
+| `AWS_REGION` | `us-east-1` |
+| `DB_PASSWORD` | Mismo valor que `DB_PASSWORD` en `.env` |
+| `SES_SENDER_EMAIL` | Mismo valor que `SES_SENDER_EMAIL` en `.env` |
+| `SES_NOTIFICATION_EMAIL` | Mismo valor que `SES_NOTIFICATION_EMAIL` en `.env` |
+
+En GitHub:
+
+```text
+Repository -> Settings -> Secrets and variables -> Actions -> New repository secret
+```
+
+Importante: para correr `terraform apply` desde GitHub de forma segura, configura un backend remoto de Terraform, por ejemplo S3 + DynamoDB. Si usas solo `terraform.tfstate` local, GitHub Actions no vera el estado de tu maquina y podria intentar recrear infraestructura.
 
 ---
 

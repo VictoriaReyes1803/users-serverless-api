@@ -41,6 +41,26 @@ resource "aws_iam_role_policy_attachment" "lambda_ses" {
   policy_arn = aws_iam_policy.lambda_ses.arn
 }
 
+# Secrets Manager — read the RDS master-user secret
+data "aws_iam_policy_document" "lambda_secrets" {
+  statement {
+    effect    = "Allow"
+    actions   = ["secretsmanager:GetSecretValue"]
+    resources = [aws_db_instance.main.master_user_secret[0].secret_arn]
+  }
+}
+
+resource "aws_iam_policy" "lambda_secrets" {
+  name        = "${var.project_name}-lambda-secrets-policy"
+  description = "Allow Lambda to read the RDS master-user secret from Secrets Manager"
+  policy      = data.aws_iam_policy_document.lambda_secrets.json
+}
+
+resource "aws_iam_role_policy_attachment" "lambda_secrets" {
+  role       = aws_iam_role.lambda.name
+  policy_arn = aws_iam_policy.lambda_secrets.arn
+}
+
 # CloudWatch Logs
 data "aws_iam_policy_document" "lambda_logs" {
   statement {

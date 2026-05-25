@@ -13,7 +13,7 @@ export const handler = async (event: APIGatewayProxyEventV2): Promise<APIGateway
       return badRequest('Invalid user id', parsed.error.flatten().fieldErrors);
     }
 
-    const pool = getPool();
+    const pool = await getPool();
     const repository = new UserRepository(pool);
     const service = new UserService(repository);
 

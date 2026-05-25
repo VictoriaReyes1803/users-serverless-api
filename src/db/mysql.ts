@@ -1,15 +1,32 @@
+import { SecretsManagerClient, GetSecretValueCommand } from '@aws-sdk/client-secrets-manager';
 import mysql from 'mysql2/promise';
 
+interface RdsSecret {
+  username: string;
+  password: string;
+  host: string;
+  port: number;
+}
+
+const smClient = new SecretsManagerClient({});
 let pool: mysql.Pool | null = null;
 
-export function getPool(): mysql.Pool {
+async function fetchDbCredentials(): Promise<RdsSecret> {
+  const { SecretString } = await smClient.send(
+    new GetSecretValueCommand({ SecretId: process.env.DB_SECRET_ARN! }),
+  );
+  return JSON.parse(SecretString!) as RdsSecret;
+}
+
+export async function getPool(): Promise<mysql.Pool> {
   if (!pool) {
+    const secret = await fetchDbCredentials();
     pool = mysql.createPool({
-      host: process.env.DB_HOST,
-      port: parseInt(process.env.DB_PORT ?? '3306', 10),
+      host: secret.host,
+      port: secret.port,
       database: process.env.DB_NAME,
-      user: process.env.DB_USER,
-      password: process.env.DB_PASSWORD,
+      user: secret.username,
+      password: secret.password,
       waitForConnections: true,
       connectionLimit: 10,
       queueLimit: 0,

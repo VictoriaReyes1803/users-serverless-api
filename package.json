@@ -21,6 +21,7 @@
     "destroy": "cd infra && terraform destroy -auto-approve"
   },
   "dependencies": {
+    "@aws-sdk/client-secrets-manager": "^3.1053.0",
     "@aws-sdk/client-ses": "^3.600.0",
     "mysql2": "^3.10.0",
     "zod": "^3.23.8"

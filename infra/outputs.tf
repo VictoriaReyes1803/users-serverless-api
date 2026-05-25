@@ -27,3 +27,8 @@ output "vpc_id" {
   description = "VPC ID"
   value       = aws_vpc.main.id
 }
+
+output "db_secret_arn" {
+  description = "ARN of the Secrets Manager secret holding the RDS master-user credentials"
+  value       = aws_db_instance.main.master_user_secret[0].secret_arn
+}

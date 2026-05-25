@@ -29,7 +29,7 @@ function makeEvent(body: unknown): Partial<APIGatewayProxyEventV2> {
 describe('POST /users handler', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    (mysqlModule.getPool as jest.Mock).mockReturnValue(mockPool);
+    (mysqlModule.getPool as jest.Mock).mockResolvedValue(mockPool);
     (emailService.sendUserCreatedEmail as jest.Mock).mockResolvedValue(undefined);
   });
 

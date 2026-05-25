@@ -55,12 +55,6 @@ variable "db_username" {
   sensitive   = true
 }
 
-variable "db_password" {
-  description = "MySQL master password (min 8 characters)"
-  type        = string
-  sensitive   = true
-}
-
 variable "db_instance_class" {
   description = "RDS instance class"
   type        = string

@@ -1,10 +1,7 @@
 locals {
   lambda_env = {
-    DB_HOST                = aws_db_instance.main.address
-    DB_PORT                = tostring(aws_db_instance.main.port)
+    DB_SECRET_ARN          = aws_db_instance.main.master_user_secret[0].secret_arn
     DB_NAME                = var.db_name
-    DB_USER                = var.db_username
-    DB_PASSWORD            = var.db_password
     AWS_NODEJS_CONNECTION_REUSE_ENABLED = "1"
     SES_SENDER_EMAIL       = var.ses_sender_email
     SES_NOTIFICATION_EMAIL = var.ses_notification_email
@@ -53,6 +50,7 @@ resource "aws_lambda_function" "functions" {
     aws_iam_role_policy_attachment.lambda_vpc_access,
     aws_iam_role_policy_attachment.lambda_logs,
     aws_iam_role_policy_attachment.lambda_ses,
+    aws_iam_role_policy_attachment.lambda_secrets,
   ]
 }
 

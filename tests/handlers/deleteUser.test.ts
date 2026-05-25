@@ -16,7 +16,7 @@ function makeEvent(id: string): Partial<APIGatewayProxyEventV2> {
 
 describe('DELETE /users/{id} handler', () => {
   beforeEach(() => {
-    (mysqlModule.getPool as jest.Mock).mockReturnValue(mockPool);
+    (mysqlModule.getPool as jest.Mock).mockResolvedValue(mockPool);
     mockPool.execute.mockReset();
   });
 
