@@ -34,7 +34,7 @@ describe('UserService', () => {
   });
 
   describe('createUser', () => {
-    it('creates a user and fires email notification', async () => {
+    it('creates a user and sends email notification', async () => {
       mockRepo.create.mockResolvedValueOnce(mockUser);
       const user = await service.createUser({
         name: 'John Doe',
@@ -43,8 +43,6 @@ describe('UserService', () => {
       });
       expect(user).toEqual(mockUser);
       expect(mockRepo.create).toHaveBeenCalledTimes(1);
-      // Email is fire-and-forget; give it a tick to be called
-      await new Promise((r) => setImmediate(r));
       expect(emailService.sendUserCreatedEmail).toHaveBeenCalledWith(mockUser);
     });
 
@@ -61,7 +59,6 @@ describe('UserService', () => {
         role: 'user',
       });
 
-      await new Promise((r) => setImmediate(r));
       expect(user).toEqual(mockUser);
       expect(stderrSpy).toHaveBeenCalledWith(
         expect.stringContaining('[EmailService] Failed to send notification'),

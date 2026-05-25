@@ -9,10 +9,11 @@ export class UserService {
   async createUser(input: CreateUserInput): Promise<User> {
     const user = await this.userRepository.create(input);
 
-    // Fire-and-forget email notification; errors are logged but don't fail the request
-    sendUserCreatedEmail(user).catch((err) => {
+    try {
+      await sendUserCreatedEmail(user);
+    } catch (err) {
       process.stderr.write(`[EmailService] Failed to send notification: ${String(err)}\n`);
-    });
+    }
 
     return user;
   }
