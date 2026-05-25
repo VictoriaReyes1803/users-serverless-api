@@ -6,6 +6,8 @@ function.zip
 .env
 .env.local
 .env.*.local
+.env.integration
+.integration-test-user.json
 
 # Terraform
 infra/.terraform/

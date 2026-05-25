@@ -10,6 +10,7 @@
     "build": "tsc --noEmit false --outDir dist && npm run copy-assets",
     "copy-assets": "node -e \"require('fs').cpSync('src', 'dist/src', {recursive: true, filter: (s) => !s.endsWith('.ts')})\"",
     "test": "jest --coverage --forceExit",
+    "test:integration": "jest --config jest.integration.config.js --forceExit",
     "test:watch": "jest --watch",
     "lint": "eslint \"src/**/*.ts\" \"tests/**/*.ts\"",
     "lint:fix": "eslint \"src/**/*.ts\" \"tests/**/*.ts\" --fix",
@@ -27,11 +28,13 @@
     "zod": "^3.23.8"
   },
   "devDependencies": {
+    "@aws-sdk/client-cognito-identity-provider": "^3.1053.0",
     "@types/aws-lambda": "^8.10.143",
     "@types/jest": "^29.5.12",
     "@types/node": "^20.19.41",
     "@typescript-eslint/eslint-plugin": "^7.13.0",
     "@typescript-eslint/parser": "^7.13.0",
+    "dotenv": "^17.4.2",
     "eslint": "^8.57.0",
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-prettier": "^5.1.3",

@@ -2,9 +2,8 @@
 module.exports = {
   preset: 'ts-jest',
   testEnvironment: 'node',
-  roots: ['<rootDir>/tests'],
+  roots: ['<rootDir>/tests/integration'],
   testMatch: ['**/*.test.ts'],
-  testPathIgnorePatterns: ['/node_modules/', '/tests/integration/'],
   transform: {
     '^.+\\.tsx?$': [
       'ts-jest',
@@ -19,13 +18,8 @@ module.exports = {
       },
     ],
   },
-  moduleNameMapper: {
-    '^@/(.*)$': '<rootDir>/src/$1',
-  },
-  collectCoverageFrom: ['src/**/*.ts', '!src/types/**', '!src/db/**'],
-  coverageDirectory: 'coverage',
-  coverageReporters: ['text', 'lcov', 'html'],
-  clearMocks: true,
-  resetMocks: true,
-  restoreMocks: true,
+  globalSetup: '<rootDir>/tests/integration/setup.ts',
+  globalTeardown: '<rootDir>/tests/integration/teardown.ts',
+  runInBand: true,
+  testTimeout: 30000,
 };
