@@ -4,8 +4,6 @@ import mysql from 'mysql2/promise';
 interface RdsSecret {
   username: string;
   password: string;
-  host: string;
-  port: number;
 }
 
 const smClient = new SecretsManagerClient({});
@@ -22,8 +20,8 @@ export async function getPool(): Promise<mysql.Pool> {
   if (!pool) {
     const secret = await fetchDbCredentials();
     pool = mysql.createPool({
-      host: secret.host,
-      port: secret.port,
+      host: process.env.DB_HOST,
+      port: parseInt(process.env.DB_PORT ?? '3306', 10),
       database: process.env.DB_NAME,
       user: secret.username,
       password: secret.password,

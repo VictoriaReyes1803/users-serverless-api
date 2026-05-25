@@ -1,6 +1,8 @@
 locals {
   lambda_env = {
     DB_SECRET_ARN          = aws_rds_cluster.main.master_user_secret[0].secret_arn
+    DB_HOST                = aws_rds_cluster.main.endpoint
+    DB_PORT                = tostring(aws_rds_cluster.main.port)
     DB_NAME                = var.db_name
     AWS_NODEJS_CONNECTION_REUSE_ENABLED = "1"
     SES_SENDER_EMAIL       = var.ses_sender_email
