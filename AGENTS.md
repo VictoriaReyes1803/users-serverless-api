@@ -2,14 +2,14 @@
 
 ## Project overview
 
-AWS Serverless REST API for user management. Node.js 20 + TypeScript, Lambda functions, API Gateway HTTP API, RDS MySQL, Cognito JWT auth, SES email notifications. Infrastructure managed with Terraform.
+AWS Serverless REST API for user management. Node.js 20 + TypeScript, Lambda functions, API Gateway HTTP API, Aurora Serverless v2 (MySQL 8.0), Cognito JWT auth, SES email notifications. Infrastructure managed with Terraform.
 
 ## Architecture
 
 - **Handlers** (`src/handlers/`) — one Lambda per route; parse/validate input, delegate to service. Includes `migrate.ts`, a one-shot Lambda that applies the `users` table migration from inside the VPC (no bastion required)
 - **Services** (`src/services/`) — business logic; `userService` orchestrates repository + email
 - **Repository** (`src/repositories/`) — all SQL in `userRepository`; returns domain objects
-- **DB** (`src/db/mysql.ts`) — singleton connection pool; reused across warm Lambda invocations
+- **DB** (`src/db/mysql.ts`) — singleton connection pool against Aurora Serverless v2; reused across warm Lambda invocations
 - **Schemas** (`src/schemas/`) — Zod schemas; single source of truth for validation + types
 - **Utils** — `response.ts` for uniform JSON responses, `errors.ts` for typed error hierarchy
 

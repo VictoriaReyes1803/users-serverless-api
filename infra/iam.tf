@@ -46,7 +46,7 @@ data "aws_iam_policy_document" "lambda_secrets" {
   statement {
     effect    = "Allow"
     actions   = ["secretsmanager:GetSecretValue"]
-    resources = [aws_db_instance.main.master_user_secret[0].secret_arn]
+    resources = [aws_rds_cluster.main.master_user_secret[0].secret_arn]
   }
 }
 

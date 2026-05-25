@@ -1,6 +1,6 @@
 locals {
   lambda_env = {
-    DB_SECRET_ARN          = aws_db_instance.main.master_user_secret[0].secret_arn
+    DB_SECRET_ARN          = aws_rds_cluster.main.master_user_secret[0].secret_arn
     DB_NAME                = var.db_name
     AWS_NODEJS_CONNECTION_REUSE_ENABLED = "1"
     SES_SENDER_EMAIL       = var.ses_sender_email
@@ -97,7 +97,7 @@ resource "aws_lambda_function" "migrate" {
   depends_on = [
     aws_iam_role_policy_attachment.lambda_vpc_access,
     aws_iam_role_policy_attachment.lambda_logs,
-    aws_db_instance.main,
+    aws_rds_cluster_instance.main,
   ]
 }
 

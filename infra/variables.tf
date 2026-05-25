@@ -55,10 +55,16 @@ variable "db_username" {
   sensitive   = true
 }
 
-variable "db_instance_class" {
-  description = "RDS instance class"
-  type        = string
-  default     = "db.t3.micro"
+variable "aurora_min_capacity" {
+  description = "Aurora Serverless v2 minimum capacity in ACUs (0.5 ACU = ~0.5 GB RAM)"
+  type        = number
+  default     = 0.5
+}
+
+variable "aurora_max_capacity" {
+  description = "Aurora Serverless v2 maximum capacity in ACUs"
+  type        = number
+  default     = 4
 }
 
 # SES

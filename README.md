@@ -48,7 +48,7 @@ graph TD
             LambdaList[Lambda\nlistUsers]
             LambdaUpdate[Lambda\nupdateUser]
             LambdaDelete[Lambda\ndeleteUser]
-            RDS[(RDS MySQL 8.0)]
+            RDS[(Aurora Serverless v2)]
         end
 
         SES[Amazon SES]
@@ -88,7 +88,7 @@ graph TD
 | **API Gateway HTTP API** | Enrutamiento de peticiones HTTP y autorización JWT |
 | **AWS Lambda** (×5) | Un handler por endpoint CRUD |
 | **Amazon Cognito** | Autenticación de usuarios y emisión de JWT |
-| **Amazon RDS MySQL 8.0** | Base de datos relacional en subred privada |
+| **Amazon Aurora Serverless v2 (MySQL 8.0)** | Base de datos serverless con auto-scaling y Multi-AZ integrado |
 | **Amazon SES** | Envío de email de notificación al crear usuario |
 | **Amazon VPC** | Red privada con subredes públicas y privadas |
 | **NAT Gateway** | Acceso a internet saliente desde Lambda/RDS |
@@ -262,7 +262,7 @@ terraform apply
 api_url              = https://xxxxxxxxxx.execute-api.us-east-1.amazonaws.com/users
 cognito_user_pool_id = us-east-1_XXXXXXXXX
 cognito_client_id    = xxxxxxxxxxxxxxxxxxxxxxxxxx
-rds_endpoint         = besta-users-mysql.xxxxxxx.us-east-1.rds.amazonaws.com
+aurora_endpoint      = besta-users-aurora-cluster.cluster-xxxxxxx.us-east-1.rds.amazonaws.com
 ```
 
 ### 5. Ejecutar la migración de base de datos
@@ -270,7 +270,7 @@ rds_endpoint         = besta-users-mysql.xxxxxxx.us-east-1.rds.amazonaws.com
 Conecta al RDS a través de un bastion host o AWS Systems Manager Session Manager:
 
 ```bash
-mysql -h <rds_endpoint> -u admin -p besta_users < migrations/001_create_users_table.sql
+mysql -h <aurora_endpoint> -u admin -p besta_users < migrations/001_create_users_table.sql
 ```
 
 ### 6. Destruir la infraestructura
@@ -481,8 +481,7 @@ El archivo `docs/openapi.yaml` contiene la especificación completa de la API.
 
 | Mejora | Descripción |
 |---|---|
-| **RDS Proxy** | Reducir la carga de conexiones a la DB con múltiples invocaciones Lambda |
-| **Multi-AZ RDS** | Alta disponibilidad para producción |
+| **RDS Proxy** | Reducir la carga de conexiones al cluster Aurora con múltiples invocaciones Lambda concurrentes |
 | **WAF** | Web Application Firewall en API Gateway para protección adicional |
 | **X-Ray** | Trazas distribuidas para depuración y rendimiento |
 | **Paginación con cursor** | Mejor rendimiento que limit/offset para datasets grandes |

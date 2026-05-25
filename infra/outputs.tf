@@ -13,14 +13,14 @@ output "cognito_client_id" {
   value       = aws_cognito_user_pool_client.main.id
 }
 
-output "rds_endpoint" {
-  description = "RDS MySQL endpoint (without port)"
-  value       = aws_db_instance.main.address
+output "aurora_endpoint" {
+  description = "Aurora cluster writer endpoint"
+  value       = aws_rds_cluster.main.endpoint
 }
 
-output "rds_port" {
-  description = "RDS MySQL port"
-  value       = aws_db_instance.main.port
+output "aurora_port" {
+  description = "Aurora cluster port"
+  value       = aws_rds_cluster.main.port
 }
 
 output "vpc_id" {
@@ -30,5 +30,5 @@ output "vpc_id" {
 
 output "db_secret_arn" {
   description = "ARN of the Secrets Manager secret holding the RDS master-user credentials"
-  value       = aws_db_instance.main.master_user_secret[0].secret_arn
+  value       = aws_rds_cluster.main.master_user_secret[0].secret_arn
 }

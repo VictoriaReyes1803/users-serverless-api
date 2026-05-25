@@ -5,35 +5,47 @@ resource "aws_db_subnet_group" "main" {
   tags = { Name = "${var.project_name}-db-subnet-group" }
 }
 
-resource "aws_db_instance" "main" {
-  identifier        = "${var.project_name}-mysql"
-  engine            = "mysql"
-  engine_version    = "8.0"
-  instance_class    = var.db_instance_class
-  allocated_storage = 20
-  storage_type      = "gp2"
-  storage_encrypted = true
+resource "aws_rds_cluster" "main" {
+  cluster_identifier = "${var.project_name}-aurora-cluster"
+  engine             = "aurora-mysql"
+  engine_version     = "8.0.mysql_aurora.3.04.0"
 
-  db_name  = var.db_name
-  username = var.db_username
+  database_name   = var.db_name
+  master_username = var.db_username
   manage_master_user_password = true
 
-  db_subnet_group_name   = aws_db_subnet_group.main.name
-  vpc_security_group_ids = [aws_security_group.rds.id]
+  db_subnet_group_name            = aws_db_subnet_group.main.name
+  vpc_security_group_ids          = [aws_security_group.rds.id]
+  db_cluster_parameter_group_name = aws_rds_cluster_parameter_group.main.name
 
-  publicly_accessible     = false
-  backup_retention_period = 0     # 0 = backups desactivados (requerido en Free Tier); aumentar en prod
+  serverlessv2_scaling_configuration {
+    min_capacity = var.aurora_min_capacity
+    max_capacity = var.aurora_max_capacity
+  }
+
+  storage_encrypted       = true
+  backup_retention_period = 1     # Aurora requires >= 1
   deletion_protection     = false # Set to true for production
   skip_final_snapshot     = true  # Set to false for production
 
-  parameter_group_name = aws_db_parameter_group.main.name
-
-  tags = { Name = "${var.project_name}-mysql" }
+  tags = { Name = "${var.project_name}-aurora-cluster" }
 }
 
-resource "aws_db_parameter_group" "main" {
-  name   = "${var.project_name}-mysql8-params"
-  family = "mysql8.0"
+resource "aws_rds_cluster_instance" "main" {
+  identifier         = "${var.project_name}-aurora-instance"
+  cluster_identifier = aws_rds_cluster.main.id
+  instance_class     = "db.serverless"
+  engine             = aws_rds_cluster.main.engine
+  engine_version     = aws_rds_cluster.main.engine_version
+
+  db_subnet_group_name = aws_db_subnet_group.main.name
+
+  tags = { Name = "${var.project_name}-aurora-instance" }
+}
+
+resource "aws_rds_cluster_parameter_group" "main" {
+  name   = "${var.project_name}-aurora-mysql8-params"
+  family = "aurora-mysql8.0"
 
   parameter {
     name  = "character_set_server"
@@ -45,5 +57,5 @@ resource "aws_db_parameter_group" "main" {
     value = "utf8mb4_unicode_ci"
   }
 
-  tags = { Name = "${var.project_name}-mysql-params" }
+  tags = { Name = "${var.project_name}-aurora-mysql-params" }
 }
