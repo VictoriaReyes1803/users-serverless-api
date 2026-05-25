@@ -17,11 +17,12 @@ API REST serverless de producción para gestión de usuarios construida sobre in
 9. [Despliegue con Terraform](#despliegue-con-terraform)
 10. [Despliegue automatico con GitHub Actions](#despliegue-automatico-con-github-actions)
 11. [Autenticación con Cognito](#autenticación-con-cognito)
-12. [Endpoints con curl](#endpoints-con-curl)
-13. [Verificación de email en Mailinator](#verificación-de-email-en-mailinator)
-14. [Documentación OpenAPI](#documentación-openapi)
-15. [Notas de seguridad](#notas-de-seguridad)
-16. [Mejoras posibles](#mejoras-posibles)
+12. [Registro y autenticación desde el frontend](#registro-y-autenticación-desde-el-frontend)
+13. [Endpoints con curl](#endpoints-con-curl)
+14. [Verificación de email en Mailinator](#verificación-de-email-en-mailinator)
+15. [Documentación OpenAPI](#documentación-openapi)
+16. [Notas de seguridad](#notas-de-seguridad)
+17. [Mejoras posibles](#mejoras-posibles)
 
 ---
 
@@ -357,7 +358,286 @@ export API_URL="https://xxxxxxxxxx.execute-api.us-east-1.amazonaws.com"
 
 ---
 
-## Endpoints con curl
+## Registro y autenticación desde el frontend
+
+Esta sección explica paso a paso cómo un frontend (React, Vue, Next.js, etc.) puede registrar un usuario en Cognito, confirmar el email y obtener los JWT tokens para consumir la API.
+
+### Flujo completo
+
+```
+Frontend                        Cognito                     API Gateway + Lambda
+   |                               |                               |
+   |--- 1. signUp() --------------->|                               |
+   |<-- confirmación por email ---- |                               |
+   |--- 2. confirmSignUp(código) -->|                               |
+   |--- 3. signIn() --------------->|                               |
+   |<-- { IdToken, AccessToken, --- |                               |
+   |       RefreshToken }           |                               |
+   |                               |                               |
+   |--- 4. POST /users + Bearer IdToken --------------------------->|
+   |<-- 201 Created ------------------------------------------------|
+```
+
+> **Tokens Cognito**
+> - **IdToken** — contiene los claims del usuario (`email`, `sub`, etc.). Es el que se envía como `Bearer` en `Authorization`. Expira en 1 hora.
+> - **AccessToken** — para operaciones propias de Cognito (cambiar contraseña, etc.). No se envía a esta API.
+> - **RefreshToken** — permite renovar IdToken + AccessToken sin que el usuario vuelva a hacer login. Expira en 30 días.
+
+---
+
+### Paso 0 — Instalar la librería
+
+```bash
+npm install amazon-cognito-identity-js
+```
+
+No requiere AWS SDK completo. Compatible con cualquier framework frontend moderno.
+
+---
+
+### Paso 1 — Configurar el pool
+
+Crea un archivo `src/lib/cognito.ts` (o `.js`) con los valores del output de Terraform:
+
+```typescript
+import {
+  CognitoUserPool,
+  CognitoUser,
+  AuthenticationDetails,
+  CognitoUserAttribute,
+  ISignUpResult,
+} from 'amazon-cognito-identity-js';
+
+const POOL_DATA = {
+  UserPoolId: 'us-east-1_XXXXXXXXX',   // cognito_user_pool_id del output Terraform
+  ClientId: 'xxxxxxxxxxxxxxxxxxxxxxxxxx', // cognito_client_id del output Terraform
+};
+
+export const userPool = new CognitoUserPool(POOL_DATA);
+```
+
+Si usas variables de entorno (recomendado para no hardcodear los ids):
+
+```typescript
+const POOL_DATA = {
+  UserPoolId: process.env.NEXT_PUBLIC_COGNITO_USER_POOL_ID!,
+  ClientId: process.env.NEXT_PUBLIC_COGNITO_CLIENT_ID!,
+};
+```
+
+---
+
+### Paso 2 — Registro (Sign Up)
+
+Cognito crea el usuario y, si el User Pool tiene verificación de email activada, envía un código de 6 dígitos al email ingresado.
+
+```typescript
+export function signUp(email: string, password: string): Promise<ISignUpResult> {
+  const attributes = [
+    new CognitoUserAttribute({ Name: 'email', Value: email }),
+  ];
+
+  return new Promise((resolve, reject) => {
+    userPool.signUp(email, password, attributes, [], (err, result) => {
+      if (err || !result) return reject(err);
+      resolve(result);
+    });
+  });
+}
+```
+
+**Uso en el componente:**
+
+```typescript
+try {
+  await signUp('usuario@ejemplo.com', 'MiPassword123!');
+  // redirigir a pantalla de confirmación
+} catch (err) {
+  // err.message contiene la descripción del error de Cognito
+  console.error(err);
+}
+```
+
+**Requisitos de contraseña por defecto de Cognito:**
+- Mínimo 8 caracteres
+- Al menos una mayúscula
+- Al menos una minúscula
+- Al menos un número
+- Al menos un símbolo (configurable en el User Pool)
+
+---
+
+### Paso 3 — Confirmación del email
+
+El usuario recibe un email con un código de 6 dígitos. El frontend debe pedirle ese código y enviarlo a Cognito para activar la cuenta.
+
+```typescript
+export function confirmSignUp(email: string, code: string): Promise<void> {
+  const cognitoUser = new CognitoUser({ Username: email, Pool: userPool });
+
+  return new Promise((resolve, reject) => {
+    cognitoUser.confirmRegistration(code, true, (err) => {
+      if (err) return reject(err);
+      resolve();
+    });
+  });
+}
+```
+
+**Reenviar el código si venció o no llegó:**
+
+```typescript
+export function resendConfirmationCode(email: string): Promise<void> {
+  const cognitoUser = new CognitoUser({ Username: email, Pool: userPool });
+
+  return new Promise((resolve, reject) => {
+    cognitoUser.resendConfirmationCode((err) => {
+      if (err) return reject(err);
+      resolve();
+    });
+  });
+}
+```
+
+---
+
+### Paso 4 — Login y obtención de tokens (Sign In)
+
+```typescript
+import { CognitoUserSession } from 'amazon-cognito-identity-js';
+
+export function signIn(email: string, password: string): Promise<CognitoUserSession> {
+  const authDetails = new AuthenticationDetails({
+    Username: email,
+    Password: password,
+  });
+  const cognitoUser = new CognitoUser({ Username: email, Pool: userPool });
+
+  return new Promise((resolve, reject) => {
+    cognitoUser.authenticateUser(authDetails, {
+      onSuccess: (session) => resolve(session),
+      onFailure: (err) => reject(err),
+      newPasswordRequired: () => reject(new Error('Se requiere cambio de contraseña')),
+    });
+  });
+}
+```
+
+**Extraer el IdToken del resultado:**
+
+```typescript
+const session = await signIn('usuario@ejemplo.com', 'MiPassword123!');
+
+const idToken     = session.getIdToken().getJwtToken();   // enviar como Bearer
+const accessToken = session.getAccessToken().getJwtToken();
+const refreshToken = session.getRefreshToken().getToken();
+
+// Guardar en memoria o sessionStorage (nunca en localStorage por seguridad)
+sessionStorage.setItem('idToken', idToken);
+```
+
+---
+
+### Paso 5 — Llamar a la API con el token
+
+Con el `idToken` obtenido en el paso anterior, todas las peticiones a la API deben incluir el header `Authorization: Bearer <idToken>`.
+
+```typescript
+const API_URL = 'https://xxxxxxxxxx.execute-api.us-east-1.amazonaws.com';
+
+async function apiRequest(method: string, path: string, body?: unknown) {
+  const idToken = sessionStorage.getItem('idToken');
+
+  const response = await fetch(`${API_URL}${path}`, {
+    method,
+    headers: {
+      'Authorization': `Bearer ${idToken}`,
+      'Content-Type': 'application/json',
+    },
+    body: body ? JSON.stringify(body) : undefined,
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.message || 'Error en la API');
+  }
+
+  return response.status === 204 ? null : response.json();
+}
+
+// Crear usuario
+await apiRequest('POST', '/users', {
+  name: 'Juan Pérez',
+  email: 'juan@example.com',
+  phone: '+5491234567890',
+  role: 'user',
+});
+
+// Listar usuarios
+const { items } = await apiRequest('GET', '/users?limit=10&offset=0');
+```
+
+---
+
+### Paso 6 — Renovar el token automáticamente (Refresh)
+
+El `IdToken` expira en **1 hora**. Antes de cada petición, conviene verificar si expiró y renovarlo con el `RefreshToken`.
+
+```typescript
+export function getCurrentSession(): Promise<CognitoUserSession | null> {
+  const cognitoUser = userPool.getCurrentUser();
+  if (!cognitoUser) return Promise.resolve(null);
+
+  return new Promise((resolve, reject) => {
+    cognitoUser.getSession((err: Error | null, session: CognitoUserSession | null) => {
+      if (err || !session) return resolve(null);
+      resolve(session);
+    });
+  });
+}
+
+// Wrapper que garantiza un token vigente antes de cada llamada
+export async function getValidIdToken(): Promise<string> {
+  const session = await getCurrentSession();
+  if (!session || !session.isValid()) {
+    throw new Error('Sesión expirada, por favor inicia sesión nuevamente');
+  }
+  // amazon-cognito-identity-js renueva el token automáticamente si el RefreshToken es válido
+  return session.getIdToken().getJwtToken();
+}
+```
+
+La librería `amazon-cognito-identity-js` renueva el `IdToken` en segundo plano usando el `RefreshToken` cuando llamas a `getSession()` y el token expiró. No es necesario manejar el refresh manualmente.
+
+---
+
+### Paso 7 — Logout (Sign Out)
+
+```typescript
+export function signOut(): void {
+  const cognitoUser = userPool.getCurrentUser();
+  if (cognitoUser) {
+    cognitoUser.signOut();           // limpia tokens del almacenamiento local
+  }
+  sessionStorage.removeItem('idToken');
+}
+```
+
+---
+
+### Errores comunes de Cognito
+
+| Código de error | Causa | Solución |
+|---|---|---|
+| `UsernameExistsException` | El email ya está registrado | Mostrar mensaje e ir a login |
+| `UserNotConfirmedException` | Login antes de confirmar email | Redirigir a pantalla de confirmación |
+| `NotAuthorizedException` | Contraseña incorrecta | Mostrar mensaje genérico |
+| `CodeMismatchException` | Código de confirmación incorrecto | Permitir reintento o reenvío |
+| `ExpiredCodeException` | El código de 6 dígitos venció | Reenviar código con `resendConfirmationCode` |
+| `InvalidPasswordException` | La contraseña no cumple la política | Mostrar requisitos al usuario |
+| `LimitExceededException` | Demasiados intentos | Esperar e informar al usuario |
+
+---
 
 ### POST /users — Crear usuario
 
