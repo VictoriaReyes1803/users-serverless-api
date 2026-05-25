@@ -13,6 +13,7 @@ const mockUser: User = {
   email: 'john@example.com',
   phone: '+1234567890',
   role: 'user',
+  age: 16,
   createdAt: '2024-01-01T00:00:00.000Z',
   updatedAt: '2024-01-01T00:00:00.000Z',
 };

@@ -18,6 +18,7 @@ const dbRow = {
   email: 'john@example.com',
   phone: null,
   role: 'user',
+  age: 16,
   created_at: now,
   updated_at: now,
 };
@@ -36,22 +37,23 @@ describe('POST /users handler', () => {
   it('returns 201 with the created user', async () => {
     mockPool.execute.mockResolvedValueOnce([{ affectedRows: 1 }]).mockResolvedValueOnce([[dbRow]]);
 
-    const event = makeEvent({ name: 'John Doe', email: 'john@example.com', role: 'user' });
+    const event = makeEvent({ name: 'John Doe', email: 'john@example.com', age: 18, role: 'user' });
     const response = (await handler(event as APIGatewayProxyEventV2)) as HandlerResult;
 
     expect(response.statusCode).toBe(201);
     const body = JSON.parse(response.body);
     expect(body.name).toBe('John Doe');
+    expect(body.age).toBe(18);
   });
 
   it('returns 400 for invalid body', async () => {
-    const event = makeEvent({ name: '', email: 'bad-email', role: 'unknown' });
+    const event = makeEvent({ name: '', email: 'bad-email', age: 18, role: 'unknown' });
     const response = (await handler(event as APIGatewayProxyEventV2)) as HandlerResult;
     expect(response.statusCode).toBe(400);
   });
 
   it('returns 400 when body is missing required fields', async () => {
-    const event = makeEvent({ name: 'John' });
+    const event = makeEvent({ name: 'John', email: 'john@example.com', age: 18, role: 'user' });
     const response = (await handler(event as APIGatewayProxyEventV2)) as HandlerResult;
     expect(response.statusCode).toBe(400);
   });
@@ -64,7 +66,7 @@ describe('POST /users handler', () => {
   it('returns 409 when email already exists', async () => {
     mockPool.execute.mockRejectedValueOnce({ code: 'ER_DUP_ENTRY' });
 
-    const event = makeEvent({ name: 'John Doe', email: 'john@example.com', role: 'user' });
+    const event = makeEvent({ name: 'John Doe', email: 'john@example.com', age: 18, role: 'user' });
     const response = (await handler(event as APIGatewayProxyEventV2)) as HandlerResult;
 
     expect(response.statusCode).toBe(409);

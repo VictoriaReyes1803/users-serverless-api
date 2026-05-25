@@ -12,6 +12,7 @@ const mockUser: User = {
   email: 'john@example.com',
   phone: null,
   role: 'user',
+  age: 16,
   createdAt: '2024-01-01T00:00:00.000Z',
   updatedAt: '2024-01-01T00:00:00.000Z',
 };
@@ -39,6 +40,7 @@ describe('UserService', () => {
       const user = await service.createUser({
         name: 'John Doe',
         email: 'john@example.com',
+        age: 18,
         role: 'user',
       });
       expect(user).toEqual(mockUser);
@@ -56,6 +58,7 @@ describe('UserService', () => {
       const user = await service.createUser({
         name: 'John Doe',
         email: 'john@example.com',
+        age: 18,
         role: 'user',
       });
 

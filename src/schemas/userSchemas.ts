@@ -6,6 +6,7 @@ export const createUserSchema = z.object({
   name: z.string().min(1, 'Name is required').max(150, 'Name must be at most 150 characters'),
   email: z.string().email('Invalid email address').max(255, 'Email must be at most 255 characters'),
   phone: z.string().max(50, 'Phone must be at most 50 characters').optional().nullable(),
+  age: z.number().int().positive(),
   role: userRoleSchema,
 });
 
@@ -22,6 +23,7 @@ export const updateUserSchema = z
       .max(255, 'Email must be at most 255 characters')
       .optional(),
     phone: z.string().max(50, 'Phone must be at most 50 characters').optional().nullable(),
+    age: z.number().int().positive().optional().nullable(),
     role: userRoleSchema.optional(),
   })
   .refine((data) => Object.keys(data).length > 0, {

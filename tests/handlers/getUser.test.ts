@@ -16,6 +16,7 @@ const dbRow = {
   email: 'john@example.com',
   phone: null,
   role: 'user',
+  age: 16,
   created_at: now,
   updated_at: now,
 };

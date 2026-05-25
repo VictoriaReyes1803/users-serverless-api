@@ -13,6 +13,7 @@ const dbRow = {
   email: 'john@example.com',
   phone: null,
   role: 'user',
+  age: 18,
   created_at: now,
   updated_at: now,
 };
@@ -32,6 +33,7 @@ describe('UserRepository', () => {
       expect(user).not.toBeNull();
       expect(user!.id).toBe(dbRow.id);
       expect(user!.createdAt).toBe(now.toISOString());
+      expect(user!.age).toBe(dbRow.age);
     });
 
     it('returns null when not found', async () => {
@@ -46,8 +48,14 @@ describe('UserRepository', () => {
       mockExecute
         .mockResolvedValueOnce([{ affectedRows: 1 }]) // INSERT
         .mockResolvedValueOnce([[dbRow]]); // SELECT after insert
-      const user = await repo.create({ name: 'John Doe', email: 'john@example.com', role: 'user' });
+      const user = await repo.create({
+        name: 'John Doe',
+        email: 'john@example.com',
+        age: 18,
+        role: 'user',
+      });
       expect(user.name).toBe('John Doe');
+      expect(user.age).toBe(18);
     });
 
     it('passes phone when creating a user with phone', async () => {
@@ -60,17 +68,18 @@ describe('UserRepository', () => {
         email: 'john@example.com',
         phone: '+1234567890',
         role: 'user',
+        age: 18,
       });
 
       expect(mockExecute.mock.calls[0][1]).toEqual(
-        expect.arrayContaining(['John Doe', 'john@example.com', '+1234567890', 'user']),
+        expect.arrayContaining(['John Doe', 'john@example.com', '+1234567890', 18, 'user']),
       );
     });
 
     it('throws ConflictError on duplicate email', async () => {
       mockExecute.mockRejectedValueOnce({ code: 'ER_DUP_ENTRY' });
       await expect(
-        repo.create({ name: 'John', email: 'john@example.com', role: 'user' }),
+        repo.create({ name: 'John', email: 'john@example.com', role: 'user', age: 18 }),
       ).rejects.toBeInstanceOf(ConflictError);
     });
 
@@ -78,7 +87,7 @@ describe('UserRepository', () => {
       mockExecute.mockRejectedValueOnce(new Error('connection lost'));
 
       await expect(
-        repo.create({ name: 'John', email: 'john@example.com', role: 'user' }),
+        repo.create({ name: 'John', email: 'john@example.com', role: 'user', age: 18 }),
       ).rejects.toThrow('connection lost');
     });
   });
@@ -107,17 +116,19 @@ describe('UserRepository', () => {
       mockExecute
         .mockResolvedValueOnce([{ affectedRows: 1 }])
         .mockResolvedValueOnce([
-          [{ ...dbRow, email: 'new@example.com', phone: '+1', role: 'admin' }],
+          [{ ...dbRow, email: 'new@example.com', phone: '+1', role: 'admin', age: 18 }],
         ]);
 
       const user = await repo.update(dbRow.id, {
         email: 'new@example.com',
         phone: '+1',
+        age: 18,
         role: 'admin',
       });
 
       expect(mockExecute.mock.calls[0][0]).toContain('email = ?');
       expect(mockExecute.mock.calls[0][0]).toContain('phone = ?');
+      expect(mockExecute.mock.calls[0][0]).toContain('age = ?');
       expect(mockExecute.mock.calls[0][0]).toContain('role = ?');
       expect(user).not.toBeNull();
     });

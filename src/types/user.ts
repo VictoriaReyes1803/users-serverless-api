@@ -6,6 +6,7 @@ export interface User {
   email: string;
   phone: string | null;
   role: UserRole;
+  age: number | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -13,6 +14,7 @@ export interface User {
 export interface CreateUserInput {
   name: string;
   email: string;
+  age: number | null;
   phone?: string | null;
   role: UserRole;
 }
@@ -22,6 +24,7 @@ export interface UpdateUserInput {
   email?: string;
   phone?: string | null;
   role?: UserRole;
+  age?: number | null;
 }
 
 export interface ListUsersOptions {
@@ -44,4 +47,5 @@ export interface DbUserRow {
   role: UserRole;
   created_at: Date;
   updated_at: Date;
+  age: number | null;
 }

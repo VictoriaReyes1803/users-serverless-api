@@ -11,6 +11,7 @@ function mapRowToUser(row: DbUserRow): User {
     name: row.name,
     email: row.email,
     phone: row.phone,
+    age: row.age,
     role: row.role,
     createdAt: new Date(row.created_at).toISOString(),
     updatedAt: new Date(row.updated_at).toISOString(),
@@ -26,8 +27,8 @@ export class UserRepository {
 
     try {
       await this.pool.execute<ResultSetHeader>(
-        'INSERT INTO users (id, name, email, phone, role, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)',
-        [id, input.name, input.email, input.phone ?? null, input.role, now, now],
+        'INSERT INTO users (id, name, email, phone, age, role, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+        [id, input.name, input.email, input.phone ?? null, input.age ?? null, input.role, now, now],
       );
     } catch (err: unknown) {
       const mysqlErr = err as { code?: string };
@@ -43,7 +44,7 @@ export class UserRepository {
 
   async findById(id: string): Promise<User | null> {
     const [rows] = await this.pool.execute<RowDataPacket[]>(
-      'SELECT id, name, email, phone, role, created_at, updated_at FROM users WHERE id = ?',
+      'SELECT id, name, email, phone, age, role, created_at, updated_at FROM users WHERE id = ?',
       [id],
     );
 
@@ -58,7 +59,7 @@ export class UserRepository {
     const [countResult, dataResult] = await Promise.all([
       this.pool.execute<RowDataPacket[]>('SELECT COUNT(*) as total FROM users'),
       this.pool.execute<RowDataPacket[]>(
-        `SELECT id, name, email, phone, role, created_at, updated_at FROM users ORDER BY created_at DESC LIMIT ${safeLimit} OFFSET ${safeOffset}`,
+        `SELECT id, name, email, phone, age, role, created_at, updated_at FROM users ORDER BY created_at DESC LIMIT ${safeLimit} OFFSET ${safeOffset}`,
       ),
     ]);
 
@@ -88,6 +89,10 @@ export class UserRepository {
     if (input.phone !== undefined) {
       fields.push('phone = ?');
       values.push(input.phone ?? null);
+    }
+    if (input.age !== undefined) {
+      fields.push('age = ?');
+      values.push(input.age ?? null);
     }
     if (input.role !== undefined) {
       fields.push('role = ?');
